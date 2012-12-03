@@ -1,12 +1,11 @@
 package org.dramatech.atq.gesture;
 
 import SimpleOpenNI.SimpleOpenNI;
+import java.awt.Frame;
 import netP5.NetAddress;
-import org.dramatech.atq.graphics.PFrame;
 import oscP5.OscMessage;
 import oscP5.OscP5;
 import processing.core.PApplet;
-import processing.core.PFont;
 import processing.core.PImage;
 import processing.core.PVector;
 
@@ -19,8 +18,6 @@ public class GestureRecognizer extends PApplet {
     private int checkGestures;
     private Gesture[] currGesture;
     public final static float PRECISION = 0.1f;
-
-    PFrame gestureInfoFrame;
 
     public void setup() {
         context = new SimpleOpenNI(this, SimpleOpenNI.RUN_MODE_MULTI_THREADED);
@@ -42,9 +39,6 @@ public class GestureRecognizer extends PApplet {
         smooth();
 
 
-        gestureInfoFrame = new PFrame("Current Gesture");
-        final PFont font = loadFont("Serif-30.vlw");
-        gestureInfoFrame.s.textFont(font);
         controller = new GestureController[10];
         for(int i = 0; i < 10; i++){
             controller[i] = new GestureController();
@@ -85,9 +79,12 @@ public class GestureRecognizer extends PApplet {
                 final PVector displayPos = new PVector();
                 context.convertRealWorldToProjective(pos, displayPos);
                 sendJointPosition(userId, pos);
-                stroke(0, 255, 0);
+                if (currGesture[userId] != null && currGesture[userId].confidence >= PRECISION) {
+                    stroke(0, 255, 0);
+                } else {
+                    stroke(255, 0, 0);
+                }
                 point(displayPos.x, displayPos.y);
-                //System.out.println("Center of Mass: "+pos);
             }
         }
         popStyle();
@@ -154,19 +151,6 @@ public class GestureRecognizer extends PApplet {
                 } else {
                     checkGestures++;
                 }
-                gestureInfoFrame.s.fill(0);
-                gestureInfoFrame.s.rect(0, 0, gestureInfoFrame.w, gestureInfoFrame.h);
-                
-                if (currGesture[i] != null && currGesture[i].confidence >= PRECISION) {
-                    // Erase previous
-                    gestureInfoFrame.s.fill(255, 255, 255);
-                    gestureInfoFrame.s.text(currGesture[i].name
-                            + ". Con: " + currGesture[i].confidence
-                            + ". Dur: "
-                            + currGesture[i].duration
-                            + ". Tempo: " + currGesture[i].tempo, 0, 50);
-                }
-                
             }
 
         }
@@ -175,13 +159,6 @@ public class GestureRecognizer extends PApplet {
 
     // Draw the skeleton with the selected joints
     private void drawSkeleton(final int userId) {
-        // to get the 3d joint data
-        /*
-        PVector jointPos = new PVector();
-        context.getJointPositionSkeleton(userId,SimpleOpenNI.SKEL_NECK,jointPos);
-        println(jointPos);
-        */
-
         context.drawLimb(userId, SimpleOpenNI.SKEL_HEAD, SimpleOpenNI.SKEL_NECK);
 
         context.drawLimb(userId, SimpleOpenNI.SKEL_NECK, SimpleOpenNI.SKEL_LEFT_SHOULDER);
